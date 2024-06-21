@@ -3,15 +3,15 @@ use sqlx::SqlitePool;
 pub async fn create_globalchat(
     pool: &SqlitePool,
     name: String,
-    channel_id: i64,
+    author_id: i64,
 ) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
-        INSERT INTO globalchat (name, channels)
+        INSERT INTO globalchat (name, created_by)
         VALUES (?, ?)
         "#,
         name,
-        channel_id,
+        author_id,
     )
     .execute(pool)
     .await?;
@@ -25,9 +25,8 @@ pub async fn add_channel_to_globalchat(
 ) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
-        UPDATE globalchat
-        SET channels = channels || ?
-        WHERE name = ?
+        INSERT INTO globalchat_channels (id, name)
+        VALUES (?, ?)
         "#,
         channel_id,
         name,

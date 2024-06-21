@@ -19,7 +19,13 @@ async fn create(
     #[description = "名前"] name: String,
 ) -> anyhow::Result<()> {
     let channel_id = ctx.interaction.clone().channel.map(|c| c.id).unwrap();
-    db::create_globalchat(&ctx.data.pool, name, channel_id.get() as i64).await?;
+    db::create_globalchat(
+        &ctx.data.pool,
+        name.clone(),
+        ctx.interaction.author_id().unwrap().get() as i64,
+    )
+    .await?;
+    db::add_channel_to_globalchat(&ctx.data.pool, name, channel_id.get() as i64).await?;
     ctx.interaction_client
         .create_response(
             ctx.interaction.id,
