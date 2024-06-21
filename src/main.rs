@@ -2,22 +2,28 @@ use std::{env, sync::Arc};
 use tokio::task::JoinSet;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 use twilight_http::Client as HttpClient;
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType};
+use twilight_model::http::interaction::{
+    InteractionResponse, InteractionResponseData, InteractionResponseType,
+};
 use vesper::framework::Framework;
 use vesper::prelude::*;
 
 #[command]
 #[description = "テスト"]
 async fn test(ctx: &mut SlashContext<()>) -> anyhow::Result<()> {
-    ctx.interaction_client.create_response(ctx.interaction.id, &ctx.interaction.token, &InteractionResponse {
-        kind: InteractionResponseType::ChannelMessageWithSource,
-        data: Some(
-            InteractionResponseData {
-                content: Some("Hello, World!".to_string()),
-                ..Default::default()
-            }
+    ctx.interaction_client
+        .create_response(
+            ctx.interaction.id,
+            &ctx.interaction.token,
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(InteractionResponseData {
+                    content: Some("Hello, World!".to_string()),
+                    ..Default::default()
+                }),
+            },
         )
-    }).await?;
+        .await?;
     Ok(())
 }
 
@@ -46,10 +52,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let application_id = {
-        let app_info = http.current_user_application()
-            .await?
-            .model()
-            .await?;
+        let app_info = http.current_user_application().await?.model().await?;
         app_info.id
     };
 
@@ -57,9 +60,7 @@ async fn main() -> anyhow::Result<()> {
         let framework = Framework::builder(http, application_id, ())
             .command(test)
             .build();
-        let content = serde_json::to_string_pretty(
-            &framework.twilight_commands()
-        )?;
+        let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");
         std::fs::write(path, content)?;
         Arc::new(framework)
