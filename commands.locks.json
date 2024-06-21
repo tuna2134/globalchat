@@ -1,9 +1,9 @@
 [
   {
     "default_member_permissions": null,
-    "description": "グローバルチャットに参加します。",
+    "description": "グローバルチャットを作成します。",
     "type": 1,
-    "name": "join",
+    "name": "create",
     "options": [
       {
         "autocomplete": false,
@@ -18,9 +18,9 @@
   },
   {
     "default_member_permissions": null,
-    "description": "グローバルチャットを作成します。",
+    "description": "グローバルチャットに参加します。",
     "type": 1,
-    "name": "create",
+    "name": "join",
     "options": [
       {
         "autocomplete": false,
