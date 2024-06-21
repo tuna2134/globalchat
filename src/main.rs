@@ -67,10 +67,13 @@ async fn join(
     Ok(())
 }
 
-async fn handle_event(event: Event) -> anyhow::Result<()> {
+async fn handle_event(event: Event, http: Arc<HttpClient>, pool: Arc<SqlitePool>) -> anyhow::Result<()> {
     match event {
         Event::Ready(_r) => {
             tracing::info!("Bot is ready!");
+        }
+        Event::MessageCreate(msg) => {
+            
         }
         _ => {}
     }
@@ -92,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
         let http = HttpClient::new(token.clone());
         let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT;
         let shard = Shard::new(ShardId::ONE, token, intents);
-        (http, shard)
+        (Arc::new(http), shard)
     };
 
     let application_id = {
@@ -110,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
         let data = Data {
             pool: Arc::clone(&pool),
         };
-        let framework = Framework::builder(http, application_id, data)
+        let framework = Framework::builder(http.clone(), application_id, data)
             .command(create)
             .command(join)
             .build();
@@ -135,13 +138,15 @@ async fn main() -> anyhow::Result<()> {
             Ok(event) => event,
         };
         let clone = Arc::clone(&framework);
+        let http = Arc::clone(&http);
+        let pool = Arc::clone(&pool);
         set.spawn(async move {
             if let Event::InteractionCreate(inter) = event.clone() {
                 tokio::spawn(async move {
                     clone.process(inter.clone().0).await;
                 });
             };
-            tokio::spawn(handle_event(event));
+            tokio::spawn(handle_event(event, Arc::clone(&http), Arc::clone(&pool)));
         });
     }
     Ok(())
