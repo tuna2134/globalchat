@@ -36,6 +36,31 @@ async fn create(
     Ok(())
 }
 
+#[command]
+#[description = "グローバルチャットに参加します。"]
+#[only_guilds]
+async fn join(
+    ctx: &mut SlashContext<Data>,
+    #[description = "名前"] name: String,
+) -> anyhow::Result<()> {
+    let channel_id = ctx.interaction.clone().channel.map(|c| c.id).unwrap();
+    db::add_channel_to_globalchat(&ctx.data.pool, name, channel_id.get() as i64).await?;
+    ctx.interaction_client
+        .create_response(
+            ctx.interaction.id,
+            &ctx.interaction.token,
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(InteractionResponseData {
+                    content: Some("参加しました。".to_string()),
+                    ..Default::default()
+                }),
+            },
+        )
+        .await?;
+    Ok(())
+}
+
 async fn handle_event(event: Event) -> anyhow::Result<()> {
     match event {
         Event::Ready(_r) => {
@@ -81,6 +106,7 @@ async fn main() -> anyhow::Result<()> {
         };
         let framework = Framework::builder(http, application_id, data)
             .command(create)
+            .command(join)
             .build();
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO globalchat (name, channels)\n        VALUES (?, ?)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "912a48f33b9111715e7e614b2aa1556f6c7ceb0fda6475e7ea9f82b2721c39cd"
+}
