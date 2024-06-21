@@ -1,3 +1,4 @@
+use sqlx::SqlitePool;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
@@ -8,9 +9,17 @@ use twilight_model::http::interaction::{
 use vesper::framework::Framework;
 use vesper::prelude::*;
 
+mod db;
+
 #[command]
-#[description = "テスト"]
-async fn test(ctx: &mut SlashContext<()>) -> anyhow::Result<()> {
+#[description = "グローバルチャットを作成します。"]
+#[only_guilds]
+async fn create(
+    ctx: &mut SlashContext<Data>,
+    #[description = "名前"] name: String,
+) -> anyhow::Result<()> {
+    let channel_id = ctx.interaction.clone().channel.map(|c| c.id).unwrap();
+    db::create_globalchat(&ctx.data.pool, name, channel_id.get() as i64).await?;
     ctx.interaction_client
         .create_response(
             ctx.interaction.id,
@@ -18,7 +27,7 @@ async fn test(ctx: &mut SlashContext<()>) -> anyhow::Result<()> {
             &InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(InteractionResponseData {
-                    content: Some("Hello, World!".to_string()),
+                    content: Some("作成しました".to_string()),
                     ..Default::default()
                 }),
             },
@@ -35,6 +44,10 @@ async fn handle_event(event: Event) -> anyhow::Result<()> {
         _ => {}
     }
     Ok(())
+}
+
+struct Data {
+    pool: Arc<SqlitePool>,
 }
 
 #[tokio::main]
@@ -56,15 +69,25 @@ async fn main() -> anyhow::Result<()> {
         app_info.id
     };
 
+    let pool = {
+        let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+        sqlx::migrate!().run(&pool).await?;
+        Arc::new(pool)
+    };
+
     let framework = {
-        let framework = Framework::builder(http, application_id, ())
-            .command(test)
+        let data = Data {
+            pool: Arc::clone(&pool),
+        };
+        let framework = Framework::builder(http, application_id, data)
+            .command(create)
             .build();
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");
         std::fs::write(path, content)?;
         Arc::new(framework)
     };
+
     let mut set = JoinSet::new();
 
     loop {
