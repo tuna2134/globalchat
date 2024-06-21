@@ -67,14 +67,16 @@ async fn join(
     Ok(())
 }
 
-async fn handle_event(event: Event, http: Arc<HttpClient>, pool: Arc<SqlitePool>) -> anyhow::Result<()> {
+async fn handle_event(
+    event: Event,
+    http: Arc<HttpClient>,
+    pool: Arc<SqlitePool>,
+) -> anyhow::Result<()> {
     match event {
         Event::Ready(_r) => {
             tracing::info!("Bot is ready!");
         }
-        Event::MessageCreate(msg) => {
-            
-        }
+        Event::MessageCreate(msg) => {}
         _ => {}
     }
     Ok(())
