@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use twilight_model::id::Id;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
@@ -76,7 +77,25 @@ async fn handle_event(
         Event::Ready(_r) => {
             tracing::info!("Bot is ready!");
         }
-        Event::MessageCreate(msg) => {}
+        Event::MessageCreate(msg) => {
+            if msg.author.bot {
+                return Ok(());
+            }
+            let name = db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64)
+                .await?;
+            if let Some(name) = name {
+                tracing::debug!("Global chat: {}", name);
+                let channels = db::get_globalchat_channels(&pool, name).await?;
+                for channel in channels {
+                    if channel == msg.channel_id.get() as i64 {
+                        continue;
+                    }
+                    http.create_message(Id::new(channel as u64))
+                        .content(&msg.content)?
+                        .await?;
+                }
+            }
+        }
         _ => {}
     }
     Ok(())
@@ -95,7 +114,7 @@ async fn main() -> anyhow::Result<()> {
     let (http, mut shard) = {
         let token = env::var("DISCORD_TOKEN")?;
         let http = HttpClient::new(token.clone());
-        let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT;
+        let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT | Intents::GUILD_MESSAGES;
         let shard = Shard::new(ShardId::ONE, token, intents);
         (Arc::new(http), shard)
     };
