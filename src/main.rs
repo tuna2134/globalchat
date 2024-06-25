@@ -1,4 +1,6 @@
 use sqlx::SqlitePool;
+use twilight_http::request::channel;
+use twilight_model::id::Id;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
@@ -77,6 +79,22 @@ async fn handle_event(
             tracing::info!("Bot is ready!");
         }
         Event::MessageCreate(msg) => {
+            if msg.author.bot {
+                return Ok(());
+            }
+            let name = db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64)
+                .await?;
+            if let Some(name) = name {
+                let channels = db::get_globalchat_channels(&pool, name).await?;
+                for channel in channels {
+                    if channel == msg.channel_id.get() as i64 {
+                        continue;
+                    }
+                    http.create_message(Id::new(channel as u64))
+                        .content(&msg.content)?
+                        .await?;
+                }
+            }
         }
         _ => {}
     }
