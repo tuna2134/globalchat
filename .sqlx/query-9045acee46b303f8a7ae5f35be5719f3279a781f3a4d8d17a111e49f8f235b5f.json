@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT name FROM globalchat_channels\n        WHERE id = ?\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9045acee46b303f8a7ae5f35be5719f3279a781f3a4d8d17a111e49f8f235b5f"
+}
