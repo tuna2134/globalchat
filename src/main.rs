@@ -76,7 +76,8 @@ async fn handle_event(
         Event::Ready(_r) => {
             tracing::info!("Bot is ready!");
         }
-        Event::MessageCreate(msg) => {}
+        Event::MessageCreate(msg) => {
+        }
         _ => {}
     }
     Ok(())
