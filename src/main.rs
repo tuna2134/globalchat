@@ -1,5 +1,4 @@
 use sqlx::SqlitePool;
-use twilight_http::request::channel;
 use twilight_model::id::Id;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
