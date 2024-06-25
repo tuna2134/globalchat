@@ -84,6 +84,7 @@ async fn handle_event(
             let name = db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64)
                 .await?;
             if let Some(name) = name {
+                tracing::info!("Global chat: {}", name);
                 let channels = db::get_globalchat_channels(&pool, name).await?;
                 for channel in channels {
                     if channel == msg.channel_id.get() as i64 {
@@ -113,7 +114,7 @@ async fn main() -> anyhow::Result<()> {
     let (http, mut shard) = {
         let token = env::var("DISCORD_TOKEN")?;
         let http = HttpClient::new(token.clone());
-        let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT;
+        let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT | Intents::GUILD_MESSAGES;
         let shard = Shard::new(ShardId::ONE, token, intents);
         (Arc::new(http), shard)
     };
