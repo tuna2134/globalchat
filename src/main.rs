@@ -1,12 +1,13 @@
 use sqlx::SqlitePool;
-use twilight_model::id::Id;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
+use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 use twilight_http::Client as HttpClient;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
 };
+use twilight_model::id::Id;
 use vesper::framework::Framework;
 use vesper::prelude::*;
 
@@ -71,6 +72,7 @@ async fn join(
 async fn handle_event(
     event: Event,
     http: Arc<HttpClient>,
+    cache: Arc<InMemoryCache>,
     pool: Arc<SqlitePool>,
 ) -> anyhow::Result<()> {
     match event {
@@ -81,8 +83,8 @@ async fn handle_event(
             if msg.author.bot {
                 return Ok(());
             }
-            let name = db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64)
-                .await?;
+            let name =
+                db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64).await?;
             if let Some(name) = name {
                 tracing::debug!("Global chat: {}", name);
                 let channels = db::get_globalchat_channels(&pool, name).await?;
@@ -90,8 +92,45 @@ async fn handle_event(
                     if channel == msg.channel_id.get() as i64 {
                         continue;
                     }
+                    let channel_id = Id::new(channel as u64);
+                    let bot = cache.current_user().unwrap();
+                    let webhooks = http.channel_webhooks(channel_id).await?.model().await?;
+                    let webhooks = webhooks
+                        .iter()
+                        .filter(|webhook| {
+                            if let Some(webhook_user) = &webhook.user {
+                                webhook_user.id == bot.id
+                            } else {
+                                false
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                    let webhook = if webhooks.is_empty() {
+                        drop(webhooks);
+                        http.create_webhook(channel_id, "globalchat")?
+                            .await?
+                            .model()
+                            .await?
+                    } else {
+                        webhooks[0].clone()
+                    };
+                    /*
                     http.create_message(Id::new(channel as u64))
                         .content(&msg.content)?
+                        .await?;
+                    */
+                    let avatar_url = if let Some(avatar) = msg.author.avatar {
+                        format!(
+                            "https://cdn.discordapp.com/avatars/{}/{}.png",
+                            msg.author.id, avatar
+                        )
+                    } else {
+                        String::new()
+                    };
+                    http.execute_webhook(webhook.id, &webhook.token.unwrap())
+                        .content(&msg.content)?
+                        .avatar_url(&avatar_url)
+                        .username(&msg.author.name)?
                         .await?;
                 }
             }
@@ -111,12 +150,15 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenvy::dotenv().ok();
 
-    let (http, mut shard) = {
+    let (http, mut shard, cache) = {
         let token = env::var("DISCORD_TOKEN")?;
         let http = HttpClient::new(token.clone());
         let intents = Intents::GUILDS | Intents::MESSAGE_CONTENT | Intents::GUILD_MESSAGES;
         let shard = Shard::new(ShardId::ONE, token, intents);
-        (Arc::new(http), shard)
+        let cache = InMemoryCache::builder()
+            .resource_types(ResourceType::USER_CURRENT)
+            .build();
+        (Arc::new(http), shard, Arc::new(cache))
     };
 
     let application_id = {
@@ -160,16 +202,23 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(event) => event,
         };
+        cache.update(&event.clone());
         let clone = Arc::clone(&framework);
         let http = Arc::clone(&http);
         let pool = Arc::clone(&pool);
+        let cache = Arc::clone(&cache);
         set.spawn(async move {
             if let Event::InteractionCreate(inter) = event.clone() {
                 tokio::spawn(async move {
                     clone.process(inter.clone().0).await;
                 });
             };
-            tokio::spawn(handle_event(event, Arc::clone(&http), Arc::clone(&pool)));
+            tokio::spawn(handle_event(
+                event,
+                Arc::clone(&http),
+                Arc::clone(&cache),
+                Arc::clone(&pool),
+            ));
         });
     }
     Ok(())

@@ -53,10 +53,7 @@ pub async fn get_globalchat_name_by_channel_id(
     Ok(name)
 }
 
-pub async fn get_globalchat_channels(
-    pool: &SqlitePool,
-    name: String,
-) -> anyhow::Result<Vec<i64>> {
+pub async fn get_globalchat_channels(pool: &SqlitePool, name: String) -> anyhow::Result<Vec<i64>> {
     let channels = sqlx::query!(
         r#"
         SELECT id FROM globalchat_channels
