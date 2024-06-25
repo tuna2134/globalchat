@@ -138,9 +138,11 @@ async fn main() -> anyhow::Result<()> {
             .command(create)
             .command(join)
             .build();
+        /*
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");
         std::fs::write(path, content)?;
+        */
         Arc::new(framework)
     };
 
