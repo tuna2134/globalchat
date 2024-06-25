@@ -84,7 +84,7 @@ async fn handle_event(
             let name = db::get_globalchat_name_by_channel_id(&pool, msg.channel_id.get() as i64)
                 .await?;
             if let Some(name) = name {
-                tracing::info!("Global chat: {}", name);
+                tracing::debug!("Global chat: {}", name);
                 let channels = db::get_globalchat_channels(&pool, name).await?;
                 for channel in channels {
                     if channel == msg.channel_id.get() as i64 {
