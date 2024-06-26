@@ -114,11 +114,6 @@ async fn handle_event(
                     } else {
                         webhooks[0].clone()
                     };
-                    /*
-                    http.create_message(Id::new(channel as u64))
-                        .content(&msg.content)?
-                        .await?;
-                    */
                     let avatar_hash = if let Some(avatar) = msg.author.avatar {
                         format!(
                             "https://cdn.discordapp.com/avatars/{}/{}.png",
