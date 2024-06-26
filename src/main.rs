@@ -119,14 +119,23 @@ async fn handle_event(
                         .content(&msg.content)?
                         .await?;
                     */
-                    let avatar_url = if let Some(avatar) = msg.author.avatar {
+                    let avatar_hash = if let Some(avatar) = msg.author.avatar {
                         format!(
                             "https://cdn.discordapp.com/avatars/{}/{}.png",
                             msg.author.id, avatar
                         )
                     } else {
-                        String::new()
+                        let result = if msg.author.discriminator == 0 {
+                            (msg.author.id.get() >> 22) % 5
+                        } else {
+                            (msg.author.discriminator % 5).into()
+                        };
+                        result.to_string()
                     };
+                    let avatar_url = format!(
+                        "https://cdn.discordapp.com/avatars/{}/{}.png",
+                        msg.author.id, avatar_hash
+                    );
                     http.execute_webhook(webhook.id, &webhook.token.unwrap())
                         .content(&msg.content)?
                         .avatar_url(&avatar_url)
