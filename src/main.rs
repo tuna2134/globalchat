@@ -117,22 +117,20 @@ async fn handle_event(
                         webhooks[0].clone()
                     };
                     let avatar_hash = if let Some(avatar) = msg.author.avatar {
-                        format!(
-                            "https://cdn.discordapp.com/avatars/{}/{}.png",
-                            msg.author.id, avatar
-                        )
+                        avatar.to_string()
                     } else {
                         let result = if msg.author.discriminator == 0 {
                             (msg.author.id.get() >> 22) % 5
                         } else {
                             (msg.author.discriminator % 5).into()
                         };
-                        result.to_string()
+                        format!("{}.png", result.to_string())
                     };
                     let avatar_url = format!(
                         "https://cdn.discordapp.com/avatars/{}/{}.png",
                         msg.author.id, avatar_hash
                     );
+                    println!("{}", avatar_url);
                     http.execute_webhook(webhook.id, &webhook.token.unwrap())
                         .content(&msg.content)?
                         .avatar_url(&avatar_url)
