@@ -124,13 +124,12 @@ async fn handle_event(
                         } else {
                             (msg.author.discriminator % 5).into()
                         };
-                        format!("{}.png", result.to_string())
+                        result.to_string()
                     };
                     let avatar_url = format!(
                         "https://cdn.discordapp.com/avatars/{}/{}.png",
                         msg.author.id, avatar_hash
                     );
-                    println!("{}", avatar_url);
                     http.execute_webhook(webhook.id, &webhook.token.unwrap())
                         .content(&msg.content)?
                         .avatar_url(&avatar_url)
