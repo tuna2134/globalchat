@@ -16,6 +16,7 @@ mod db;
 #[command]
 #[description = "グローバルチャットを作成します。"]
 #[only_guilds]
+#[required_permissions(MANAGE_CHANNELS)]
 async fn create(
     ctx: &mut SlashContext<Data>,
     #[description = "名前"] name: String,
@@ -47,6 +48,7 @@ async fn create(
 #[command]
 #[description = "グローバルチャットに参加します。"]
 #[only_guilds]
+#[required_permissions(MANAGE_CHANNELS)]
 async fn join(
     ctx: &mut SlashContext<Data>,
     #[description = "名前"] name: String,
@@ -184,11 +186,9 @@ async fn main() -> anyhow::Result<()> {
             .command(create)
             .command(join)
             .build();
-        /*
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");
         std::fs::write(path, content)?;
-        */
         Arc::new(framework)
     };
 
