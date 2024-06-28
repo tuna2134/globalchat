@@ -71,6 +71,29 @@ async fn join(
     Ok(())
 }
 
+#[command]
+#[description = "グローバルチャットから退出します。"]
+#[only_guilds]
+#[required_permissions(MANAGE_CHANNELS)]
+async fn leave(ctx: &mut SlashContext<Data>) -> anyhow::Result<()> {
+    let channel_id = ctx.interaction.clone().channel.map(|c| c.id).unwrap();
+    db::delete_globalchat_channel(&ctx.data.pool, channel_id.get() as i64).await?;
+    ctx.interaction_client
+        .create_response(
+            ctx.interaction.id,
+            &ctx.interaction.token,
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(InteractionResponseData {
+                    content: Some("退出しました。".to_string()),
+                    ..Default::default()
+                }),
+            },
+        )
+        .await?;
+    Ok(())
+}
+
 async fn handle_event(
     event: Event,
     http: Arc<HttpClient>,
@@ -182,6 +205,7 @@ async fn main() -> anyhow::Result<()> {
         let framework = Framework::builder(http.clone(), application_id, data)
             .command(create)
             .command(join)
+            .command(leave)
             .build();
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");

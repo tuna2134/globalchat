@@ -65,3 +65,16 @@ pub async fn get_globalchat_channels(pool: &SqlitePool, name: String) -> anyhow:
     .await?;
     Ok(channels.into_iter().map(|r| r.id).collect())
 }
+
+pub async fn delete_globalchat_channel(pool: &SqlitePool, channel_id: i64) -> anyhow::Result<()> {
+    sqlx::query!(
+        r#"
+        DELETE FROM globalchat_channels
+        WHERE id = ?
+        "#,
+        channel_id,
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
