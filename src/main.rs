@@ -94,6 +94,22 @@ async fn leave(ctx: &mut SlashContext<Data>) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[after]
+async fn after(
+    ctx: &mut SlashContext<Data>,
+    command_name: &str,
+    error: Option<anyhow::Result<()>>,
+) {
+    if let Some(Err(err)) = error {
+        tracing::error!(
+            "Command '{}' executed by user '{}' with result '{:?}'",
+            command_name,
+            ctx.interaction.author_id().unwrap(),
+            err
+        );
+    };
+}
+
 async fn handle_event(
     event: Event,
     http: Arc<HttpClient>,
@@ -206,6 +222,7 @@ async fn main() -> anyhow::Result<()> {
             .command(create)
             .command(join)
             .command(leave)
+            .after(after)
             .build();
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/commands.locks.json");
