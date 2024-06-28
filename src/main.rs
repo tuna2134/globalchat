@@ -1,11 +1,13 @@
+use reqwest::Client;
 use sqlx::SqlitePool;
 use std::{env, sync::Arc};
 use tokio::task::JoinSet;
 use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 use twilight_http::Client as HttpClient;
-use twilight_model::http::interaction::{
-    InteractionResponse, InteractionResponseData, InteractionResponseType,
+use twilight_model::http::{
+    attachment::Attachment,
+    interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
 };
 use twilight_model::id::Id;
 use vesper::framework::Framework;
@@ -169,10 +171,24 @@ async fn handle_event(
                         "https://cdn.discordapp.com/avatars/{}/{}.png",
                         msg.author.id, avatar_hash
                     );
+                    let attachments = {
+                        let mut attachments: Vec<Attachment> = Vec::new();
+                        let client = Client::new();
+                        for (index, attachment) in msg.attachments.iter().enumerate() {
+                            let data = client.get(&attachment.url).send().await?.bytes().await?;
+                            attachments.push(Attachment::from_bytes(
+                                attachment.filename.clone(),
+                                data.to_vec(),
+                                index as u64,
+                            ))
+                        }
+                        attachments
+                    };
                     http.execute_webhook(webhook.id, &webhook.token.unwrap())
                         .content(&msg.content)?
                         .avatar_url(&avatar_url)
                         .username(&msg.author.name)?
+                        .attachments(&attachments)?
                         .await?;
                 }
             }
