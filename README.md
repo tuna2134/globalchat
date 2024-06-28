@@ -1,0 +1,2 @@
+# globalchat
+Rust製Discordのグローバルチャット
