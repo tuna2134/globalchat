@@ -131,6 +131,19 @@ async fn handle_event(
             if let Some(name) = name {
                 tracing::debug!("Global chat: {}", name);
                 let channels = db::get_globalchat_channels(&pool, name).await?;
+                let attachments = {
+                    let mut attachments: Vec<Attachment> = Vec::new();
+                    let client = Client::new();
+                    for (index, attachment) in msg.attachments.iter().enumerate() {
+                        let data = client.get(&attachment.url).send().await?.bytes().await?;
+                        attachments.push(Attachment::from_bytes(
+                            attachment.filename.clone(),
+                            data.to_vec(),
+                            index as u64,
+                        ))
+                    }
+                    attachments
+                };
                 for channel in channels {
                     if channel == msg.channel_id.get() as i64 {
                         continue;
@@ -171,19 +184,6 @@ async fn handle_event(
                         "https://cdn.discordapp.com/avatars/{}/{}.png",
                         msg.author.id, avatar_hash
                     );
-                    let attachments = {
-                        let mut attachments: Vec<Attachment> = Vec::new();
-                        let client = Client::new();
-                        for (index, attachment) in msg.attachments.iter().enumerate() {
-                            let data = client.get(&attachment.url).send().await?.bytes().await?;
-                            attachments.push(Attachment::from_bytes(
-                                attachment.filename.clone(),
-                                data.to_vec(),
-                                index as u64,
-                            ))
-                        }
-                        attachments
-                    };
                     http.execute_webhook(webhook.id, &webhook.token.unwrap())
                         .content(&msg.content)?
                         .avatar_url(&avatar_url)
