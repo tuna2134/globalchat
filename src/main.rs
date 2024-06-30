@@ -64,7 +64,7 @@ async fn join(
             &InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(InteractionResponseData {
-                    content: Some("参加しました。".to_string()),
+                    content: Some("参加しました".to_string()),
                     ..Default::default()
                 }),
             },
@@ -87,7 +87,7 @@ async fn leave(ctx: &mut SlashContext<Data>) -> anyhow::Result<()> {
             &InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(InteractionResponseData {
-                    content: Some("退出しました。".to_string()),
+                    content: Some("退出しました".to_string()),
                     ..Default::default()
                 }),
             },
