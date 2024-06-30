@@ -96,6 +96,36 @@ async fn leave(ctx: &mut SlashContext<Data>) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[command]
+#[description = "グローバルチャットを削除します"]
+#[only_guilds]
+#[required_permissions(MANAGE_CHANNELS)]
+async fn delete(
+    ctx: &mut SlashContext<Data>,
+    #[description = "名前"] name: String,
+) -> anyhow::Result<()> {
+    db::delete_globalchat(
+        &ctx.data.pool,
+        name,
+        ctx.interaction.author().unwrap().id.get() as i64,
+    )
+    .await?;
+    ctx.interaction_client
+        .create_response(
+            ctx.interaction.id,
+            &ctx.interaction.token,
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(InteractionResponseData {
+                    content: Some("削除しました".to_string()),
+                    ..Default::default()
+                }),
+            },
+        )
+        .await?;
+    Ok(())
+}
+
 #[after]
 async fn after(
     ctx: &mut SlashContext<Data>,
@@ -238,6 +268,7 @@ async fn main() -> anyhow::Result<()> {
             .command(create)
             .command(join)
             .command(leave)
+            .command(delete)
             .after(after)
             .build();
         let content = serde_json::to_string_pretty(&framework.twilight_commands())?;

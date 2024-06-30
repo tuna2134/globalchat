@@ -78,3 +78,21 @@ pub async fn delete_globalchat_channel(pool: &SqlitePool, channel_id: i64) -> an
     .await?;
     Ok(())
 }
+
+pub async fn delete_globalchat(
+    pool: &SqlitePool,
+    name: String,
+    owner_id: i64,
+) -> anyhow::Result<bool> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM globalchat
+        WHERE name = ? AND created_by = ?
+        "#,
+        name,
+        owner_id,
+    )
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() > 0)
+}
