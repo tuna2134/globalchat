@@ -256,6 +256,7 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = {
         let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+        tracing::info!("Connected to database");
         sqlx::migrate!().run(&pool).await?;
         Arc::new(pool)
     };
