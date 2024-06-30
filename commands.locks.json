@@ -9,6 +9,23 @@
   },
   {
     "default_member_permissions": "16",
+    "description": "グローバルチャットを作成します。",
+    "type": 1,
+    "name": "create",
+    "options": [
+      {
+        "autocomplete": false,
+        "choices": [],
+        "description": "名前",
+        "type": 3,
+        "name": "name",
+        "required": true
+      }
+    ],
+    "version": "1"
+  },
+  {
+    "default_member_permissions": "16",
     "description": "グローバルチャットに参加します。",
     "type": 1,
     "name": "join",
@@ -29,23 +46,6 @@
     "description": "グローバルチャットを削除します",
     "type": 1,
     "name": "delete",
-    "options": [
-      {
-        "autocomplete": false,
-        "choices": [],
-        "description": "名前",
-        "type": 3,
-        "name": "name",
-        "required": true
-      }
-    ],
-    "version": "1"
-  },
-  {
-    "default_member_permissions": "16",
-    "description": "グローバルチャットを作成します。",
-    "type": 1,
-    "name": "create",
     "options": [
       {
         "autocomplete": false,
