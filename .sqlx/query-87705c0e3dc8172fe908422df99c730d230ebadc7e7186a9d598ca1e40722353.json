@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM globalchat\n        WHERE name = ? AND created_by = ?\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "87705c0e3dc8172fe908422df99c730d230ebadc7e7186a9d598ca1e40722353"
+}
