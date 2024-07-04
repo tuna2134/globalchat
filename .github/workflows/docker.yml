@@ -7,9 +7,6 @@ on:
 jobs:
   push-docker:
     runs-on: self-hosted
-    container:
-      image: archlinux/archlinux:latest
-      options: --privileged
     permissions:
       contents: read
       packages: write
